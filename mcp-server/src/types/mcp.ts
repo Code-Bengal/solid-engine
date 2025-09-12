@@ -26,6 +26,7 @@ export interface ClickResult {
   elementName: string;
   message: string;
   newUrl?: string;
+  currentPage?: PageInfo;
 }
 
 export interface NavigationResult {
@@ -33,6 +34,7 @@ export interface NavigationResult {
   targetPage: string;
   currentUrl: string;
   message: string;
+  currentPage?: PageInfo;
 }
 
 export interface FillInputResult {
