@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getRoomsFromSheets, getRoomById } from '@/lib/google-sheets';
+import { NextResponse } from 'next/server';
+import { getRoomsFromSheets } from '@/lib/google-sheets';
 
 // GET /api/rooms - Get all rooms
 export async function GET() {

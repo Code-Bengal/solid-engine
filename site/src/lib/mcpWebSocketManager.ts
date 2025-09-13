@@ -361,7 +361,7 @@ class MCPWebSocketManager {
       }
     });
 
-    this.socket.on('mcp:fillBookingForm', async (formData: any) => {
+    this.socket.on('mcp:fillBookingForm', async (formData: Record<string, unknown>) => {
       console.log('📝 [MCP Debug] Received mcp:fillBookingForm request:', formData);
       // TODO: Implement form filling logic
       const response = {
@@ -421,7 +421,7 @@ class MCPWebSocketManager {
     const originalPushState = history.pushState;
     const originalReplaceState = history.replaceState;
 
-    history.pushState = function(state: any, title: string, url?: string | URL | null) {
+    history.pushState = function(state: unknown, title: string, url?: string | URL | null) {
       originalPushState.call(history, state, title, url);
       const newPath = window.location.pathname;
       if (newPath !== currentPath) {
@@ -439,7 +439,7 @@ class MCPWebSocketManager {
       }
     };
 
-    history.replaceState = function(state: any, title: string, url?: string | URL | null) {
+    history.replaceState = function(state: unknown, title: string, url?: string | URL | null) {
       originalReplaceState.call(history, state, title, url);
       const newPath = window.location.pathname;
       if (newPath !== currentPath) {

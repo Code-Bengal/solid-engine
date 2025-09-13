@@ -7,10 +7,7 @@ import {
   getElements, 
   clickElement, 
   fillInput, 
-  navigatePage,
-  type ElementInfo,
-  type PageInfo,
-  type MCPResult
+  navigatePage
 } from './mcpElementCollector';
 import { logMCPEvent } from './mcpErrorHandling';
 
