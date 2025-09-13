@@ -22,30 +22,4 @@ export async function GET() {
   }
 }
 
-// GET /api/rooms/[id] - Get room by ID
-export async function GET_BY_ID(request: NextRequest, { params }: { params: { id: string } }) {
-  try {
-    const room = await getRoomById(params.id);
 
-    if (!room) {
-      return NextResponse.json(
-        { error: 'Room not found' },
-        { status: 404 }
-      );
-    }
-
-    // Parse amenities string to array
-    const roomWithParsedAmenities = {
-      ...room,
-      amenities: room.amenities ? room.amenities.split(',').map(a => a.trim()) : []
-    };
-
-    return NextResponse.json(roomWithParsedAmenities);
-  } catch (error) {
-    console.error('Error fetching room:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch room' },
-      { status: 500 }
-    );
-  }
-}
