@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
 import { getBookingById } from '@/lib/google-sheets';
 
-// Initialize Razorpay
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
+// Initialize Razorpay (only if environment variables are available)
+let razorpay: Razorpay | null = null;
+
+if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+  razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+}
 
 interface PaymentRequest {
   booking_id: string;
@@ -15,6 +19,14 @@ interface PaymentRequest {
 // POST /api/payments - Create a Razorpay order
 export async function POST(request: NextRequest) {
   try {
+    // Check if Razorpay is configured
+    if (!razorpay) {
+      return NextResponse.json(
+        { error: 'Payment service not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables.' },
+        { status: 503 }
+      );
+    }
+
     const body: PaymentRequest = await request.json();
     const { booking_id } = body;
 
