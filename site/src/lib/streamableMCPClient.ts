@@ -7,7 +7,10 @@ import {
   getElements, 
   clickElement, 
   fillInput, 
-  navigatePage
+  navigatePage,
+  type ElementInfo,
+  type PageInfo,
+  type MCPResult
 } from './mcpElementCollector';
 import { logMCPEvent } from './mcpErrorHandling';
 
@@ -16,6 +19,7 @@ export interface StreamableMCPClient {
   disconnect(): void;
   isConnected(): boolean;
   getSessionId(): string;
+  sendMCPRequest(method: string, params?: Record<string, unknown>): Promise<unknown>;
 }
 
 class StreamableMCPSocketClient implements StreamableMCPClient {
@@ -160,6 +164,52 @@ class StreamableMCPSocketClient implements StreamableMCPClient {
 
   getSessionId(): string {
     return this.sessionId;
+  }
+
+  async sendMCPRequest(method: string, params: Record<string, unknown> = {}): Promise<unknown> {
+    return new Promise((resolve, reject) => {
+      if (!this.socket || !this.isConnected()) {
+        reject(new Error('Not connected to MCP server'));
+        return;
+      }
+
+      const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      // Set up response handler
+        const responseHandler = (response: unknown) => {
+          if (
+            typeof response === 'object' &&
+            response !== null &&
+            'requestId' in response &&
+            (response as { requestId?: string }).requestId === requestId
+          ) {
+            this.socket!.off(`mcp:response:${method}`, responseHandler);
+            if ('error' in response && typeof (response as { error?: unknown }).error === 'string') {
+              reject(new Error((response as { error?: string }).error!));
+            } else if ('result' in response) {
+              resolve((response as { result?: unknown }).result);
+            } else {
+              resolve(undefined);
+            }
+          }
+        };
+
+      // Listen for response
+      this.socket.on(`mcp:response:${method}`, responseHandler);
+
+      // Send the request
+      this.socket.emit('mcp:request', {
+        id: requestId,
+        method,
+        params
+      });
+
+      // Timeout after 30 seconds
+      setTimeout(() => {
+        this.socket!.off(`mcp:response:${method}`, responseHandler);
+        reject(new Error(`Request timeout for method: ${method}`));
+      }, 30000);
+    });
   }
 }
 
