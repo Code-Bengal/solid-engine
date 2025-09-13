@@ -6,7 +6,6 @@ import { differenceInDays } from "date-fns";
 import Image from "next/image";
 import { StyledInput, StyledSelect, StyledTextarea } from "@/components/FormComponents";
 import { useBookingFormStore } from "@/store/bookingFormStore";
-import { toast } from 'sonner';
 
 interface Room {
   id: string;

@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import mcpWebSocketManager from '@/lib/mcpWebSocketManager';
-import { getClickableElements, getElements, fillInput, getCurrentPage } from '@/lib/mcpElementCollector';
+import { getElements, fillInput, getCurrentPage } from '@/lib/mcpElementCollector';
 import { logMCPEvent } from '@/lib/mcpErrorHandling';
 import type { ClickableElement, PageInfo } from '@/lib/mcpElementCollector';
 

@@ -8,18 +8,15 @@ import {
   clickElement, 
   fillInput, 
   navigatePage,
-  type ElementInfo,
-  type PageInfo,
-  type MCPResult
 } from './mcpElementCollector';
-import { logMCPEvent, createMCPError } from './mcpErrorHandling';
+import { logMCPEvent } from './mcpErrorHandling';
 
 export interface StreamableMCPClient {
   connect(): Promise<void>;
   disconnect(): void;
   isConnected(): boolean;
   getSessionId(): string;
-  sendMCPRequest(method: string, params?: any): Promise<any>;
+  sendMCPRequest(method: string, params?: Record<string, unknown>): Promise<unknown>;
 }
 
 class StreamableMCPSocketClient implements StreamableMCPClient {
@@ -166,7 +163,7 @@ class StreamableMCPSocketClient implements StreamableMCPClient {
     return this.sessionId;
   }
 
-  async sendMCPRequest(method: string, params: any = {}): Promise<any> {
+  async sendMCPRequest(method: string, params: Record<string, unknown> = {}): Promise<unknown> {
     return new Promise((resolve, reject) => {
       if (!this.socket || !this.isConnected()) {
         reject(new Error('Not connected to MCP server'));
@@ -176,16 +173,23 @@ class StreamableMCPSocketClient implements StreamableMCPClient {
       const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
       // Set up response handler
-      const responseHandler = (response: any) => {
-        if (response.requestId === requestId) {
-          this.socket!.off(`mcp:response:${method}`, responseHandler);
-          if (response.error) {
-            reject(new Error(response.error));
-          } else {
-            resolve(response.result);
+        const responseHandler = (response: unknown) => {
+          if (
+            typeof response === 'object' &&
+            response !== null &&
+            'requestId' in response &&
+            (response as { requestId?: string }).requestId === requestId
+          ) {
+            this.socket!.off(`mcp:response:${method}`, responseHandler);
+            if ('error' in response && typeof (response as { error?: unknown }).error === 'string') {
+              reject(new Error((response as { error?: string }).error!));
+            } else if ('result' in response) {
+              resolve((response as { result?: unknown }).result);
+            } else {
+              resolve(undefined);
+            }
           }
-        }
-      };
+        };
 
       // Listen for response
       this.socket.on(`mcp:response:${method}`, responseHandler);

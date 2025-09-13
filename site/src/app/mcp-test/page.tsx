@@ -208,11 +208,11 @@ function MCPTestContent() {
           <div className="mt-6 p-4 bg-blue-50 rounded-lg">
             <h3 className="text-sm font-medium text-blue-900 mb-2">MCP fillInput Tool Examples:</h3>
             <div className="text-xs text-blue-800 space-y-1">
-              <div><code>fillInput("test-text-input", "text", "Hello World")</code></div>
-              <div><code>fillInput("test-email-input", "email", "test@example.com")</code></div>
-              <div><code>fillInput("test-checkbox-input", "checkbox", true)</code></div>
-              <div><code>fillInput("test-select-input", "select", "option2")</code></div>
-              <div><code>fillInput("test-radio-1", "radio", true)</code></div>
+              <div><code>fillInput(&quot;test-text-input&quot;, &quot;text&quot;, &quot;Hello World&quot;)</code></div>
+              <div><code>fillInput(&quot;test-email-input&quot;, &quot;email&quot;, &quot;test@example.com&quot;)</code></div>
+              <div><code>fillInput(&quot;test-checkbox-input&quot;, &quot;checkbox&quot;, true)</code></div>
+              <div><code>fillInput(&quot;test-select-input&quot;, &quot;select&quot;, &quot;option2&quot;)</code></div>
+              <div><code>fillInput(&quot;test-radio-1&quot;, &quot;radio&quot;, true)</code></div>
             </div>
           </div>
         </div>
