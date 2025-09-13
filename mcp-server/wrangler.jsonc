@@ -1,0 +1,10 @@
+{
+  "name": "mcp-server",
+  "compatibility_date": "2025-09-13",
+  "main": "dist/worker.js",
+  "workers_dev": true,
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "FRONTEND_URL": "http://localhost:3000"
+  }
+}
