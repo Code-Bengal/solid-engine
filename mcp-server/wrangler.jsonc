@@ -5,6 +5,6 @@
   "workers_dev": true,
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
-    "FRONTEND_URL": "http://localhost:3000"
+    "FRONTEND_URL": "https://demo-website-controller-next-app.vercel.app"
   }
 }

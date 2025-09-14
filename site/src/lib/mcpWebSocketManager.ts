@@ -102,6 +102,20 @@ class MCPWebSocketManager {
         console.log('🌐 [MCP Debug] Using environment variable value:', baseUrl);
       }
       
+      // Fix protocol for production HTTPS sites
+      if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+        // Convert ws:// to wss:// for HTTPS sites
+        if (baseUrl.startsWith('ws://')) {
+          baseUrl = baseUrl.replace('ws://', 'wss://');
+          console.log('🔒 [MCP Debug] Converted to secure WebSocket for HTTPS:', baseUrl);
+        }
+        // Convert http:// to https:// for HTTPS sites
+        if (baseUrl.startsWith('http://')) {
+          baseUrl = baseUrl.replace('http://', 'https://');
+          console.log('🔒 [MCP Debug] Converted to HTTPS for secure site:', baseUrl);
+        }
+      }
+      
       const socketUrl = `${baseUrl}/tools`; // Connect to /tools namespace
       console.log('🔗 [MCP Debug] Final socket URL:', socketUrl);
       console.log('🔗 [MCP Debug] Socket.io connection options:', {
