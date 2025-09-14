@@ -71,7 +71,10 @@ class MCPWebSocketManager {
     }
 
     const performConnection = async (): Promise<boolean> => {
-      // Handle production vs development URLs
+      console.log('🚀 [MCP Debug] performConnection function started at:', new Date().toISOString());
+      console.log('🚀 [MCP Debug] Call stack:', new Error().stack);
+      
+      
       let baseUrl = process.env.NEXT_PUBLIC_MCP_SOCKET_URL;
       
       console.log('🌐 [MCP Debug] Environment variable NEXT_PUBLIC_MCP_SOCKET_URL:', baseUrl);

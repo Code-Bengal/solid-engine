@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { mcpWebSocketManager } from "@/lib/mcpWebSocketManager";
 
 interface Room {
   id: string;
@@ -18,10 +19,86 @@ interface Room {
 
 export default function Home() {
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [mcpStatus, setMcpStatus] = useState({
+    isConnected: false,
+    isConnecting: false,
+    error: null as string | null
+  });
 
   useEffect(() => {
     fetchRooms();
+    
+    // Initialize MCP connection and status monitoring
+    initializeMCP();
+    
+    // Monitor MCP status every 2 seconds
+    const statusInterval = setInterval(() => {
+      const status = mcpWebSocketManager.getStatus();
+      setMcpStatus({
+        isConnected: status.isConnected,
+        isConnecting: false,
+        error: status.connectionError
+      });
+    }, 2000);
+
+    return () => clearInterval(statusInterval);
   }, []);
+
+  const initializeMCP = async () => {
+    try {
+      console.log('🚀 [Home Page] Initializing MCP connection...');
+      const result = await mcpWebSocketManager.connect();
+      if (result.success) {
+        console.log('✅ [Home Page] MCP connected successfully');
+        setMcpStatus(prev => ({ ...prev, isConnected: true, isConnecting: false }));
+      } else {
+        console.error('❌ [Home Page] MCP connection failed:', result.error);
+        setMcpStatus(prev => ({ 
+          ...prev, 
+          isConnected: false, 
+          isConnecting: false, 
+          error: result.error?.message || 'Connection failed' 
+        }));
+      }
+    } catch (error) {
+      console.error('❌ [Home Page] MCP initialization error:', error);
+      setMcpStatus(prev => ({ 
+        ...prev, 
+        isConnected: false, 
+        isConnecting: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      }));
+    }
+  };
+
+  const handleMCPReconnect = async () => {
+    console.log('🔄 [Home Page] Manual MCP reconnect triggered...');
+    setMcpStatus(prev => ({ ...prev, isConnecting: true, error: null }));
+    
+    try {
+      const result = await mcpWebSocketManager.reconnect();
+      if (result.success) {
+        console.log('✅ [Home Page] MCP reconnected successfully');
+        setMcpStatus(prev => ({ ...prev, isConnected: true, isConnecting: false }));
+      } else {
+        console.error('❌ [Home Page] MCP reconnection failed:', result.error);
+        setMcpStatus(prev => ({ 
+          ...prev, 
+          isConnected: false, 
+          isConnecting: false, 
+          error: result.error?.message || 'Reconnection failed' 
+        }));
+      }
+    } catch (error) {
+      console.error('❌ [Home Page] MCP reconnection error:', error);
+      setMcpStatus(prev => ({ 
+        ...prev, 
+        isConnected: false, 
+        isConnecting: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      }));
+    }
+  };
 
   const fetchRooms = async () => {
     try {
@@ -237,6 +314,65 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* MCP Status Indicator and Controls - Fixed Position */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-4">
+        {/* MCP Status Badge */}
+        <div className={`px-4 py-3 rounded-full shadow-lg backdrop-blur-sm border-2 transition-all duration-300 ${
+          mcpStatus.isConnected
+            ? 'bg-green-500/90 border-green-400/50 text-white'
+            : mcpStatus.isConnecting
+            ? 'bg-yellow-500/90 border-yellow-400/50 text-white'
+            : 'bg-red-500/90 border-red-400/50 text-white'
+        }`}>
+          <div className="flex items-center space-x-3">
+            <div className={`w-3 h-3 rounded-full ${
+              mcpStatus.isConnected
+                ? 'bg-green-200 animate-pulse'
+                : mcpStatus.isConnecting
+                ? 'bg-yellow-200 animate-spin'
+                : 'bg-red-200'
+            }`}></div>
+            <span className="text-sm font-semibold">
+              MCP: {mcpStatus.isConnected ? 'Connected' : mcpStatus.isConnecting ? 'Connecting...' : 'Disconnected'}
+            </span>
+          </div>
+        </div>
+
+        {/* MCP Reconnect Button */}
+        <button
+          onClick={handleMCPReconnect}
+          disabled={mcpStatus.isConnecting}
+          className={`p-4 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 ${
+            mcpStatus.isConnecting
+              ? 'bg-yellow-500 cursor-not-allowed opacity-75'
+              : mcpStatus.isConnected
+              ? 'bg-blue-600 hover:bg-blue-700'
+              : 'bg-red-600 hover:bg-red-700'
+          } text-white`}
+          data-clickable-element="mcp-reconnect-button"
+          data-element-description="Reconnect to MCP server for real-time communication"
+          title={mcpStatus.isConnected ? 'MCP Connected - Click to refresh connection' : 'Click to reconnect to MCP server'}
+        >
+          {mcpStatus.isConnecting ? (
+            <svg className="w-6 h-6 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+            </svg>
+          )}
+        </button>
+
+        {/* Error Message Tooltip */}
+        {mcpStatus.error && !mcpStatus.isConnecting && (
+          <div className="bg-red-600/95 text-white text-xs px-3 py-2 rounded-lg max-w-xs backdrop-blur-sm border border-red-400/50 shadow-lg">
+            <div className="font-semibold mb-1">Connection Error:</div>
+            <div className="text-red-100">{mcpStatus.error}</div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
