@@ -74,23 +74,40 @@ class MCPWebSocketManager {
       // Handle production vs development URLs
       let baseUrl = process.env.NEXT_PUBLIC_MCP_SOCKET_URL;
       
+      console.log('🌐 [MCP Debug] Environment variable NEXT_PUBLIC_MCP_SOCKET_URL:', baseUrl);
+      console.log('🌐 [MCP Debug] Current window.location.hostname:', typeof window !== 'undefined' ? window.location.hostname : 'undefined (SSR)');
+      console.log('🌐 [MCP Debug] Current window.location.href:', typeof window !== 'undefined' ? window.location.href : 'undefined (SSR)');
+      
       if (!baseUrl) {
+        console.log('🌐 [MCP Debug] No environment variable found, auto-detecting environment...');
         // Auto-detect production environment
         if (typeof window !== 'undefined') {
           const hostname = window.location.hostname;
           if (hostname === 'localhost' || hostname === '127.0.0.1') {
             baseUrl = 'http://localhost:3001';
+            console.log('🌐 [MCP Debug] Detected localhost environment, using:', baseUrl);
           } else {
             // Production - use your deployed MCP server URL
             baseUrl = 'https://mcp-server.codebengal25.workers.dev';
+            console.log('🌐 [MCP Debug] Detected production environment, using:', baseUrl);
           }
         } else {
           baseUrl = 'http://localhost:3001';
+          console.log('🌐 [MCP Debug] SSR detected, defaulting to:', baseUrl);
         }
+      } else {
+        console.log('🌐 [MCP Debug] Using environment variable value:', baseUrl);
       }
       
       const socketUrl = `${baseUrl}/tools`; // Connect to /tools namespace
-      console.log(baseUrl)
+      console.log('🔗 [MCP Debug] Final socket URL:', socketUrl);
+      console.log('🔗 [MCP Debug] Socket.io connection options:', {
+        transports: ['websocket', 'polling'],
+        timeout: this.connectionTimeout,
+        reconnection: false,
+        autoConnect: false
+      });
+      
       logMCPEvent('info', `Connecting to MCP server at ${socketUrl}`);
       
       this.socket = io(socketUrl, {
