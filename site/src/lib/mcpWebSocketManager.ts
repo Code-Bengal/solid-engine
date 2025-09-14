@@ -77,7 +77,7 @@ class MCPWebSocketManager {
       
       let baseUrl = process.env.NEXT_PUBLIC_MCP_SOCKET_URL;
       
-      console.log('🌐 [MCP Debug] Environment variable NEXT_PUBLIC_MCP_SOCKET_URL:', baseUrl);
+      console.log('🌐 [MCP Debug] Environment - variable NEXT_PUBLIC_MCP_SOCKET_URL:', baseUrl);
       console.log('🌐 [MCP Debug] Current window.location.hostname:', typeof window !== 'undefined' ? window.location.hostname : 'undefined (SSR)');
       console.log('🌐 [MCP Debug] Current window.location.href:', typeof window !== 'undefined' ? window.location.href : 'undefined (SSR)');
       
