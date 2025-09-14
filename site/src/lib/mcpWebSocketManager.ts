@@ -90,7 +90,7 @@ class MCPWebSocketManager {
       }
       
       const socketUrl = `${baseUrl}/tools`; // Connect to /tools namespace
-      
+      console.log(baseUrl)
       logMCPEvent('info', `Connecting to MCP server at ${socketUrl}`);
       
       this.socket = io(socketUrl, {
