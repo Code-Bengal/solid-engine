@@ -71,7 +71,24 @@ class MCPWebSocketManager {
     }
 
     const performConnection = async (): Promise<boolean> => {
-      const baseUrl = process.env.NEXT_PUBLIC_MCP_SOCKET_URL || 'http://localhost:3001';
+      // Handle production vs development URLs
+      let baseUrl = process.env.NEXT_PUBLIC_MCP_SOCKET_URL;
+      
+      if (!baseUrl) {
+        // Auto-detect production environment
+        if (typeof window !== 'undefined') {
+          const hostname = window.location.hostname;
+          if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            baseUrl = 'http://localhost:3001';
+          } else {
+            // Production - use your deployed MCP server URL
+            baseUrl = 'https://mcp-server.codebengal25.workers.dev';
+          }
+        } else {
+          baseUrl = 'http://localhost:3001';
+        }
+      }
+      
       const socketUrl = `${baseUrl}/tools`; // Connect to /tools namespace
       
       logMCPEvent('info', `Connecting to MCP server at ${socketUrl}`);

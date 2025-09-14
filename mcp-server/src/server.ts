@@ -51,7 +51,8 @@ class StreamableMCPServer {
     
     // CORS middleware
     this.app.use((req, res, next) => {
-      res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL );
+      const allowedOrigin = process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? '*' : 'http://localhost:3000');
+      res.header('Access-Control-Allow-Origin', allowedOrigin);
       res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
       res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
       res.header('Access-Control-Allow-Credentials', 'true');

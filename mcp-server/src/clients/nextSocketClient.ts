@@ -7,7 +7,7 @@ const connectedClients: Map<string, Socket> = new Map();
 export function initializeSocketIO(httpServer: HTTPServer) {
   io = new SocketIOServer(httpServer, {
     cors: {
-      origin: process.env.FRONTEND_URL ,
+      origin: process.env.FRONTEND_URL || process.env.NODE_ENV === 'production' ? true : 'http://localhost:3000',
       methods: ['GET', 'POST'],
       credentials: true
     },
