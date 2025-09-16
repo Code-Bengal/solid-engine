@@ -1,22 +1,32 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
 export default function ElevenLabsWidget() {
   const scriptLoadedRef = useRef(false);
+  const [isClient, setIsClient] = useState(false);
+  const [agentId, setAgentId] = useState<string>('');
 
   useEffect(() => {
+    // Mark as client-side
+    setIsClient(true);
+
+    // Get the agent ID from environment variable
+    const widgetId = process.env.NEXT_PUBLIC_ELEVENLABS_WIDGET_ID || 'agent_4501k3sc0gbbfe58mqcn1754qzr0';
+    setAgentId(widgetId);
+
     // Only load the script once
     if (!scriptLoadedRef.current) {
       const script = document.createElement('script');
       script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
       script.async = true;
       script.type = 'text/javascript';
-      
+
       // Add error handling
       script.onload = () => {
         console.log('ElevenLabs ConvAI widget loaded successfully');
       };
-      
+
       script.onerror = () => {
         console.error('Failed to load ElevenLabs ConvAI widget');
       };
@@ -26,10 +36,15 @@ export default function ElevenLabsWidget() {
     }
   }, []);
 
+  // Don't render anything on the server to prevent hydration mismatch
+  if (!isClient) {
+    return <div className="elevenlabs-widget-placeholder" />;
+  }
+
   return (
-    <div 
+    <div
       dangerouslySetInnerHTML={{
-        __html: `<elevenlabs-convai agent-id="${process.env.ELEVENLABS_WIDGET_ID}"></elevenlabs-convai>`
+        __html: `<elevenlabs-convai agent-id="${agentId}"></elevenlabs-convai>`
       }}
     />
   );

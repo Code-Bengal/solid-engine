@@ -7,7 +7,7 @@ import {
   getElements, 
   clickElement, 
   fillInput, 
-  navigatePage
+  navigatePage,
 } from './mcpElementCollector';
 import { logMCPEvent } from './mcpErrorHandling';
 
@@ -24,7 +24,7 @@ class StreamableMCPSocketClient implements StreamableMCPClient {
   private sessionId: string;
   private serverUrl: string;
 
-  constructor(serverUrl: string = process.env.NEXT_MCP_URL || 'http://localhost:3001', sessionId?: string) {
+  constructor(serverUrl: string = 'http://localhost:3001', sessionId?: string) {
     this.serverUrl = serverUrl;
     this.sessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     

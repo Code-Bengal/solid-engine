@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { statements } from '@/lib/database';
-import bcrypt from 'bcryptjs';
 
 interface RegisterRequest {
   email: string;
@@ -20,37 +18,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user already exists
-    const existingUser = statements.getUserByEmail.get(email);
-    if (existingUser) {
-      return NextResponse.json(
-        { error: 'User already exists' },
-        { status: 409 }
-      );
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    // Create user
-    const result = statements.createUser.run(
-      email,
-      name,
-      hashedPassword,
-      'user'
-    );
-
+    // TODO: Implement user registration without database
+    // For now, return success without storing data
     return NextResponse.json(
       {
-        id: result.lastInsertRowid,
-        message: 'User created successfully'
+        id: Date.now(), // Temporary ID
+        message: 'User registration placeholder - database removed'
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating user:', error);
+    console.error('Error in registration:', error);
     return NextResponse.json(
-      { error: 'Failed to create user' },
+      { error: 'Registration failed' },
       { status: 500 }
     );
   }

@@ -1,8 +1,6 @@
 import NextAuth, { NextAuthOptions, User, Session } from 'next-auth';
 import { JWT } from 'next-auth/jwt';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { statements } from '@/lib/database';
-import bcrypt from 'bcryptjs';
 
 declare module 'next-auth' {
   interface User {
@@ -38,30 +36,18 @@ const authOptions: NextAuthOptions = {
         }
 
         try {
-          const user = statements.getUserByEmail.get(credentials.email) as {
-            id: number;
-            email: string;
-            name: string;
-            password: string;
-            role: string;
-          };
-
-          if (!user) {
-            return null;
+          // TODO: Implement authentication without database
+          // For demo purposes, accept any email/password combination
+          if (credentials.email && credentials.password) {
+            return {
+              id: Date.now().toString(), // Temporary ID
+              email: credentials.email,
+              name: credentials.email.split('@')[0], // Use email prefix as name
+              role: 'user',
+            };
           }
 
-          const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
-
-          if (!isPasswordValid) {
-            return null;
-          }
-
-          return {
-            id: user.id.toString(),
-            email: user.email,
-            name: user.name,
-            role: user.role,
-          };
+          return null;
         } catch (error) {
           console.error('Auth error:', error);
           return null;

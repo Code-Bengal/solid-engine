@@ -71,59 +71,8 @@ class MCPWebSocketManager {
     }
 
     const performConnection = async (): Promise<boolean> => {
-      console.log('🚀 [MCP Debug] performConnection function started at:', new Date().toISOString());
-      console.log('🚀 [MCP Debug] Call stack:', new Error().stack);
-      
-      
-      let baseUrl = process.env.NEXT_PUBLIC_MCP_SOCKET_URL;
-      
-      console.log('🌐 [MCP Debug] Environment - variable NEXT_PUBLIC_MCP_SOCKET_URL:', baseUrl);
-      console.log('🌐 [MCP Debug] Current window.location.hostname:', typeof window !== 'undefined' ? window.location.hostname : 'undefined (SSR)');
-      console.log('🌐 [MCP Debug] Current window.location.href:', typeof window !== 'undefined' ? window.location.href : 'undefined (SSR)');
-      
-      if (!baseUrl) {
-        console.log('🌐 [MCP Debug] No environment variable found, auto-detecting environment...');
-        // Auto-detect production environment
-        if (typeof window !== 'undefined') {
-          const hostname = window.location.hostname;
-          if (hostname === 'localhost' || hostname === '127.0.0.1') {
-            baseUrl = 'http://localhost:3001';
-            console.log('🌐 [MCP Debug] Detected localhost environment, using:', baseUrl);
-          } else {
-            // Production - use your deployed MCP server URL
-            baseUrl = 'https://mcp-server.codebengal25.workers.dev';
-            console.log('🌐 [MCP Debug] Detected production environment, using:', baseUrl);
-          }
-        } else {
-          baseUrl = 'http://localhost:3001';
-          console.log('🌐 [MCP Debug] SSR detected, defaulting to:', baseUrl);
-        }
-      } else {
-        console.log('🌐 [MCP Debug] Using environment variable value:', baseUrl);
-      }
-      
-      // Fix protocol for production HTTPS sites
-      if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-        // Convert ws:// to wss:// for HTTPS sites
-        if (baseUrl.startsWith('ws://')) {
-          baseUrl = baseUrl.replace('ws://', 'wss://');
-          console.log('🔒 [MCP Debug] Converted to secure WebSocket for HTTPS:', baseUrl);
-        }
-        // Convert http:// to https:// for HTTPS sites
-        if (baseUrl.startsWith('http://')) {
-          baseUrl = baseUrl.replace('http://', 'https://');
-          console.log('🔒 [MCP Debug] Converted to HTTPS for secure site:', baseUrl);
-        }
-      }
-      
+      const baseUrl = process.env.NEXT_PUBLIC_MCP_SOCKET_URL || 'http://localhost:3001';
       const socketUrl = `${baseUrl}/tools`; // Connect to /tools namespace
-      console.log('🔗 [MCP Debug] Final socket URL:', socketUrl);
-      console.log('🔗 [MCP Debug] Socket.io connection options:', {
-        transports: ['websocket', 'polling'],
-        timeout: this.connectionTimeout,
-        reconnection: false,
-        autoConnect: false
-      });
       
       logMCPEvent('info', `Connecting to MCP server at ${socketUrl}`);
       
@@ -412,7 +361,7 @@ class MCPWebSocketManager {
       }
     });
 
-    this.socket.on('mcp:fillBookingForm', async (formData: Record<string, unknown>) => {
+  this.socket.on('mcp:fillBookingForm', async (formData: Record<string, unknown>) => {
       console.log('📝 [MCP Debug] Received mcp:fillBookingForm request:', formData);
       // TODO: Implement form filling logic
       const response = {
@@ -472,7 +421,7 @@ class MCPWebSocketManager {
     const originalPushState = history.pushState;
     const originalReplaceState = history.replaceState;
 
-    history.pushState = function(state: unknown, title: string, url?: string | URL | null) {
+  history.pushState = function(state: unknown, title: string, url?: string | URL | null) {
       originalPushState.call(history, state, title, url);
       const newPath = window.location.pathname;
       if (newPath !== currentPath) {
@@ -490,7 +439,7 @@ class MCPWebSocketManager {
       }
     };
 
-    history.replaceState = function(state: unknown, title: string, url?: string | URL | null) {
+  history.replaceState = function(state: unknown, title: string, url?: string | URL | null) {
       originalReplaceState.call(history, state, title, url);
       const newPath = window.location.pathname;
       if (newPath !== currentPath) {
