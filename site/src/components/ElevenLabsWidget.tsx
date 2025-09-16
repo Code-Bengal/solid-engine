@@ -12,7 +12,7 @@ export default function ElevenLabsWidget() {
     setIsClient(true);
 
     // Get the agent ID from environment variable
-    const widgetId = process.env.NEXT_PUBLIC_ELEVENLABS_WIDGET_ID || 'agent_4501k3sc0gbbfe58mqcn1754qzr0';
+    const widgetId = process.env.NEXT_PUBLIC_ELEVENLABS_WIDGET_ID || 'agent_0001k4ms75n2eyna60s2ymv97pmh';
     setAgentId(widgetId);
 
     // Only load the script once
