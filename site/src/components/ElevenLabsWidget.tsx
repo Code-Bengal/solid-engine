@@ -1,82 +1,99 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
-// Global flag to ensure script is only loaded once across all instances
+// Global state to track the widget across page changes
+const WIDGET_CONTAINER_ID = 'elevenlabs-widget-container';
+let globalWidgetInitialized = false;
 let globalScriptLoaded = false;
-let globalScriptLoading = false;
 
 export default function ElevenLabsWidget() {
   const [isClient, setIsClient] = useState(false);
-  const [scriptReady, setScriptReady] = useState(globalScriptLoaded);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mountedRef = useRef(false);
 
   useEffect(() => {
-    // Mark as client-side
     setIsClient(true);
+    mountedRef.current = true;
 
-    // If script is already loaded, we're ready
-    if (globalScriptLoaded) {
-      setScriptReady(true);
-      return;
-    }
+    const initializeWidget = async () => {
+      // Check if widget container already exists globally
+      let globalContainer = document.getElementById(WIDGET_CONTAINER_ID);
+      
+      if (globalContainer && globalWidgetInitialized) {
+        // Widget already exists, no need to recreate
+        return;
+      }
 
-    // If script is currently loading, wait for it
-    if (globalScriptLoading) {
-      const checkReady = () => {
-        if (globalScriptLoaded) {
-          setScriptReady(true);
-        } else {
-          setTimeout(checkReady, 100);
-        }
-      };
-      checkReady();
-      return;
-    }
+      // Load script if not already loaded
+      if (!globalScriptLoaded) {
+        await loadScript();
+      }
 
-    // Load the script for the first time
-    globalScriptLoading = true;
-    
-    // Check if script already exists in DOM
-    const existingScript = document.querySelector('script[src="https://unpkg.com/@elevenlabs/convai-widget-embed"]');
-    if (existingScript) {
-      globalScriptLoaded = true;
-      globalScriptLoading = false;
-      setScriptReady(true);
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
-    script.async = true;
-    script.type = 'text/javascript';
-
-    script.onload = () => {
-      console.log('ElevenLabs ConvAI widget loaded successfully');
-      globalScriptLoaded = true;
-      globalScriptLoading = false;
-      setScriptReady(true);
+      // Create or reuse the global container
+      if (!globalContainer) {
+        globalContainer = document.createElement('div');
+        globalContainer.id = WIDGET_CONTAINER_ID;
+        globalContainer.style.position = 'fixed';
+        globalContainer.style.bottom = '20px';
+        globalContainer.style.right = '20px';
+        globalContainer.style.zIndex = '1000';
+        
+        const agentId = process.env.NEXT_PUBLIC_ELEVENLABS_WIDGET_ID || 'agent_0001k4ms75n2eyna60s2ymv97pmh';
+        globalContainer.innerHTML = `<elevenlabs-convai agent-id="${agentId}"></elevenlabs-convai>`;
+        
+        document.body.appendChild(globalContainer);
+        globalWidgetInitialized = true;
+      }
     };
 
-    script.onerror = () => {
-      console.error('Failed to load ElevenLabs ConvAI widget');
-      globalScriptLoading = false;
-    };
+    initializeWidget();
 
-    document.head.appendChild(script);
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
-  // Don't render anything on the server or while script is loading
-  if (!isClient || !scriptReady) {
-    return <div className="elevenlabs-widget-placeholder" style={{ display: 'none' }} />;
+  const loadScript = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      // Check if script already exists
+      const existingScript = document.querySelector('script[src="https://unpkg.com/@elevenlabs/convai-widget-embed"]');
+      if (existingScript) {
+        globalScriptLoaded = true;
+        resolve();
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
+      script.async = true;
+      script.type = 'text/javascript';
+
+      script.onload = () => {
+        console.log('ElevenLabs ConvAI widget loaded successfully');
+        globalScriptLoaded = true;
+        resolve();
+      };
+
+      script.onerror = () => {
+        console.error('Failed to load ElevenLabs ConvAI widget');
+        reject(new Error('Script failed to load'));
+      };
+
+      document.head.appendChild(script);
+    });
+  };
+
+  // This component doesn't render anything visible since the widget is attached to body
+  if (!isClient) {
+    return null;
   }
 
-  const agentId = process.env.NEXT_PUBLIC_ELEVENLABS_WIDGET_ID || 'agent_0001k4ms75n2eyna60s2ymv97pmh';
-
   return (
-    <div
-      dangerouslySetInnerHTML={{
-        __html: `<elevenlabs-convai agent-id="${agentId}"></elevenlabs-convai>`
-      }}
+    <div 
+      ref={containerRef}
+      style={{ display: 'none' }}
+      data-widget-placeholder="elevenlabs"
     />
   );
 }
