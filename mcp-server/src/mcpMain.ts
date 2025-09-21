@@ -15,7 +15,9 @@ import {
   ClickResult, 
   NavigationResult, 
   BookingFormResult,
-  FillInputResult 
+  FillInputResult,
+  InputData,
+  FillMultipleInputsResult
 } from './types/mcp.js';
 
 class SimpleMCPServer {
@@ -156,6 +158,45 @@ class SimpleMCPServer {
         }
       },
       {
+        name: 'fillMultipleInputs',
+        description: 'Fill multiple input elements with data in a single operation (supports text inputs, radio buttons, checkboxes, select dropdowns, textareas)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            inputs: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  inputName: {
+                    type: 'string',
+                    description: 'The data-input-element attribute value of the input to fill'
+                  },
+                  inputType: {
+                    type: 'string',
+                    description: 'The type of input element (text, email, password, radio, checkbox, select, textarea, etc.)'
+                  },
+                  data: {
+                    oneOf: [
+                      { type: 'string' },
+                      { type: 'boolean' }
+                    ],
+                    description: 'The data to fill into the input element'
+                  }
+                },
+                required: ['inputName', 'inputType', 'data']
+              },
+              description: 'Array of input data to fill'
+            },
+            sessionId: {
+              type: 'string',
+              description: 'Optional session ID to target specific client'
+            }
+          },
+          required: ['inputs']
+        }
+      },
+      {
         name: 'fillBookingForm',
         description: 'Fill booking form',
         inputSchema: {
@@ -202,6 +243,9 @@ class SimpleMCPServer {
             break;
           case 'fillInput':
             result = await this.fillInput(sessionId, (args as any).inputName, (args as any).inputType, (args as any).data);
+            break;
+          case 'fillMultipleInputs':
+            result = await this.fillMultipleInputs(sessionId, (args as any).inputs);
             break;
           case 'clickElement':
             result = await this.clickElement(sessionId, (args as any).name);
@@ -435,6 +479,40 @@ class SimpleMCPServer {
     });
   }
 
+  private async fillMultipleInputs(sessionId: string | undefined, inputs: InputData[]): Promise<FillMultipleInputsResult> {
+    console.log(`📝 [fillMultipleInputs] Starting${sessionId ? ` for sessionId: ${sessionId}` : ' with best available client'}, inputs count: ${inputs.length}`);
+    console.log(`📝 [fillMultipleInputs] Inputs data:`, inputs);
+    
+    return new Promise((resolve, reject) => {
+      const socket = sessionId ? this.nextjsClients.get(sessionId) : this.getBestAvailableClient();
+      if (!socket) {
+        const clientsList = Array.from(this.nextjsClients.keys());
+        console.log(`❌ [fillMultipleInputs] No ${sessionId ? 'matching' : 'available'} Next.js client found`);
+        console.log(`❌ [fillMultipleInputs] Available clients:`, clientsList);
+        reject(new Error('No Next.js client connected'));
+        return;
+      }
+
+      console.log(`✅ [fillMultipleInputs] Found client: ${socket.id} (connected: ${socket.connected})`);
+      console.log(`📤 [fillMultipleInputs] Emitting 'mcp:fillMultipleInputs' to client with ${inputs.length} inputs`);
+
+      const timeout = setTimeout(() => {
+        console.log(`⏰ [fillMultipleInputs] Timeout after 15 seconds for client: ${socket.id}`);
+        reject(new Error('Timeout'));
+      }, 15000);
+
+      const handler = (result: FillMultipleInputsResult) => {
+        console.log(`📥 [fillMultipleInputs] Received response from client:`, result);
+        clearTimeout(timeout);
+        socket.off('mcp:fillMultipleInputsResult', handler);
+        resolve(result);
+      };
+
+      socket.on('mcp:fillMultipleInputsResult', handler);
+      socket.emit('mcp:fillMultipleInputs', inputs);
+    });
+  }
+
   private async clickElement(sessionId: string | undefined, elementName: string): Promise<ClickResult> {
     console.log(`🖱️ [clickElement] Starting${sessionId ? ` for sessionId: ${sessionId}` : ' with best available client'}, element: ${elementName}`);
     
@@ -580,6 +658,8 @@ class SimpleMCPServer {
                 { name: 'getCurrentPage', description: 'Get current page information' },
                 { name: 'getElements', description: 'Get elements on current page by type (clickable, input, or all)' },
                 { name: 'getClickableElements', description: 'Get clickable elements on current page' },
+                { name: 'fillInput', description: 'Fill an input element with data' },
+                { name: 'fillMultipleInputs', description: 'Fill multiple input elements with data in one operation' },
                 { name: 'clickElement', description: 'Click a named element' },
                 { name: 'navigatePage', description: 'Navigate to a page' },
                 { name: 'fillBookingForm', description: 'Fill booking form' }
@@ -609,6 +689,12 @@ class SimpleMCPServer {
                     break;
                   case 'getClickableElements':
                     result = await this.getClickableElements(args?.sessionId);
+                    break;
+                  case 'fillInput':
+                    result = await this.fillInput(args?.sessionId, args?.inputName, args?.inputType, args?.data);
+                    break;
+                  case 'fillMultipleInputs':
+                    result = await this.fillMultipleInputs(args?.sessionId, args?.inputs);
                     break;
                   case 'clickElement':
                     result = await this.clickElement(args?.sessionId, args?.name);

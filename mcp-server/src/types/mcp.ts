@@ -44,6 +44,26 @@ export interface FillInputResult {
   error?: string;
 }
 
+export interface InputData {
+  inputName: string;
+  inputType: string;
+  data: string | boolean;
+}
+
+export interface FillMultipleInputsResult {
+  success: boolean;
+  results: Array<{
+    inputName: string;
+    success: boolean;
+    message: string;
+    error?: string;
+  }>;
+  totalInputs: number;
+  successfulInputs: number;
+  failedInputs: number;
+  message: string;
+}
+
 export interface BookingFormResult {
   success: boolean;
   fieldsUpdated: string[];

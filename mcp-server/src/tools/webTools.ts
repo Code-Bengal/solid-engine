@@ -82,6 +82,43 @@ export const fillInputTool: Tool = {
   }
 };
 
+export const fillMultipleInputsTool: Tool = {
+  name: 'fillMultipleInputs',
+  description: 'Fill multiple input elements with data in a single operation (supports text inputs, radio buttons, checkboxes, select dropdowns, textareas)',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      inputs: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            inputName: {
+              type: 'string',
+              description: 'The data-input-element attribute value of the input to fill'
+            },
+            inputType: {
+              type: 'string',
+              description: 'The type of input element (text, email, password, radio, checkbox, select, textarea, etc.)'
+            },
+            data: {
+              type: ['string', 'boolean'],
+              description: 'The data to fill into the input element'
+            }
+          },
+          required: ['inputName', 'inputType', 'data']
+        },
+        description: 'Array of input data to fill'
+      },
+      sessionId: {
+        type: 'string',
+        description: 'Optional session ID to target specific client'
+      }
+    },
+    required: ['inputs']
+  }
+};
+
 export const navigatePageTool: Tool = {
   name: 'navigatePage',
   description: 'Navigate to a specific page',

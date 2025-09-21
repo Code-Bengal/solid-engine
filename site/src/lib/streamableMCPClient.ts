@@ -132,6 +132,67 @@ class StreamableMCPSocketClient implements StreamableMCPClient {
       }
     });
 
+    this.socket.on('mcp:fillMultipleInputs', async (inputs: Array<{ inputName: string; inputType: string; data: string | boolean }>) => {
+      console.log('📥 Received fillMultipleInputs request:', inputs);
+      console.log('📥 Processing', inputs.length, 'inputs');
+
+      const results: Array<{
+        inputName: string;
+        success: boolean;
+        message: string;
+        error?: string;
+      }> = [];
+
+      let successfulInputs = 0;
+      let failedInputs = 0;
+
+      // Process each input sequentially
+      for (const input of inputs) {
+        try {
+          console.log('📥 Processing input:', input.inputName);
+          const result = await fillInput(input.inputName, input.inputType, input.data);
+          
+          if (result.success && result.data) {
+            results.push({
+              inputName: input.inputName,
+              success: true,
+              message: result.data.message
+            });
+            successfulInputs++;
+          } else {
+            results.push({
+              inputName: input.inputName,
+              success: false,
+              message: 'Failed to fill input',
+              error: result.error?.message || 'Unknown error'
+            });
+            failedInputs++;
+          }
+        } catch (error) {
+          results.push({
+            inputName: input.inputName,
+            success: false,
+            message: 'Exception during input fill',
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+          failedInputs++;
+          console.error('❌ Error filling input:', input.inputName, error);
+        }
+      }
+
+      const overallSuccess = failedInputs === 0;
+      const response = {
+        success: overallSuccess,
+        results: results,
+        totalInputs: inputs.length,
+        successfulInputs: successfulInputs,
+        failedInputs: failedInputs,
+        message: `Processed ${inputs.length} inputs: ${successfulInputs} successful, ${failedInputs} failed`
+      };
+
+      this.socket!.emit('mcp:fillMultipleInputsResult', response);
+    });
+
     this.socket.on('mcp:navigatePage', async (page: string) => {
       console.log('📥 Received navigatePage request:', page);
       try {

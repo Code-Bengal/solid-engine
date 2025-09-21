@@ -361,6 +361,74 @@ class MCPWebSocketManager {
       }
     });
 
+    this.socket.on('mcp:fillMultipleInputs', async (inputs: Array<{ inputName: string, inputType: string, data: string | boolean }>) => {
+      console.log('📝 [MCP Debug] Received mcp:fillMultipleInputs request:', inputs);
+      console.log('📝 [MCP Debug] Processing', inputs.length, 'inputs');
+      console.log('📝 [MCP Debug] Current socket ID:', this.socket?.id);
+
+      const results: Array<{
+        inputName: string;
+        success: boolean;
+        message: string;
+        error?: string;
+      }> = [];
+
+      let successfulInputs = 0;
+      let failedInputs = 0;
+
+      // Process each input sequentially to avoid conflicts
+      for (const input of inputs) {
+        try {
+          console.log('📝 [MCP Debug] Processing input:', input);
+          const result = await fillInput(input.inputName, input.inputType, input.data);
+          
+          if (result.success && result.data) {
+            results.push({
+              inputName: input.inputName,
+              success: true,
+              message: result.data.message
+            });
+            successfulInputs++;
+            console.log('📝 [MCP Debug] Input filled successfully:', input.inputName);
+          } else {
+            results.push({
+              inputName: input.inputName,
+              success: false,
+              message: 'Failed to fill input',
+              error: result.error?.message || 'Unknown error'
+            });
+            failedInputs++;
+            console.log('📝 [MCP Debug] Input failed:', input.inputName, result.error);
+          }
+        } catch (error) {
+          results.push({
+            inputName: input.inputName,
+            success: false,
+            message: 'Exception during input fill',
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+          failedInputs++;
+          console.error('📝 [MCP Debug] Exception filling input:', input.inputName, error);
+        }
+      }
+
+      const overallSuccess = failedInputs === 0;
+      const response = {
+        success: overallSuccess,
+        results: results,
+        totalInputs: inputs.length,
+        successfulInputs: successfulInputs,
+        failedInputs: failedInputs,
+        message: `Processed ${inputs.length} inputs: ${successfulInputs} successful, ${failedInputs} failed`,
+        socketId: this.socket?.id,
+        timestamp: new Date().toISOString()
+      };
+
+      console.log('📝 [MCP Debug] Multiple inputs response:', response);
+      this.socket!.emit('mcp:fillMultipleInputsResult', response);
+      console.log(`📝 [MCP Debug] ${overallSuccess ? '✅' : '❌'} mcp:fillMultipleInputsResult response sent from socket:`, this.socket?.id);
+    });
+
   this.socket.on('mcp:fillBookingForm', async (formData: Record<string, unknown>) => {
       console.log('📝 [MCP Debug] Received mcp:fillBookingForm request:', formData);
       // TODO: Implement form filling logic
